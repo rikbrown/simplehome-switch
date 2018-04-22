@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: simplehome-switch
+
+Transform:
+- AWS::Serverless-2016-10-31
+
+Resources:
+  ###
+  ### Roles
+  ###
+
+  # A role for the lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+            Action:
+            - sts:AssumeRole
+
+  LambdaExecutionPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: SimpleHomeSwitchLambaExecutionPolicy
+      PolicyDocument:
+        Statement: []
+      Roles:
+      - !Ref LambdaExecutionRole
+      Groups:
+      - !Ref LambdaExecutionGroup
+
+  ###
+  ### IAM groups
+  ###
+
+  # A group for users whom can assume the role
+  LambdaExecutionGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: simplehome-switch-lambda-execution
+
+  ###
+  ### Lambdas
+  ###
+  CreatePost:
+    Type: AWS::Serverless::Function
+    DependsOn: LambdaExecutionRole
+    Properties:
+      Handler: codes.rik.simplehome.switch.lambda.SwitchDelegatingLambdaHander
+      Role: !GetAtt LambdaExecutionRole.Arn
+      CodeUri: ../build/libs/simplehome-switch-0.1-all.jar
+      Timeout: 15
+      MemorySize: 192
+      Runtime: java8
+      Environment:
+        Variables:
+          Foo: Bar # FIXME
+      Events:
+        SwitchEvent:
+          Type: Api
+          Properties:
+            Path: /
+            Method: post

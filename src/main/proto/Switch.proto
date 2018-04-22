@@ -1,0 +1,22 @@
+syntax = "proto3";
+package codes.rik.simplehome.switches.api;
+
+message SetSwitchRequest {
+    repeated SwitchControl control = 1;
+}
+
+message SetSwitchResponse {
+    bool status = 1;
+}
+
+message SwitchControl {
+    string switchId = 1;
+    SwitchAction action = 2;
+
+    message SwitchAction {
+        oneof action {
+            bool switchedOn = 1;
+            double level = 2;
+        }
+    }
+}
