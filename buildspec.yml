@@ -1,0 +1,29 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      # get a local copy of our private gradle dependencies, because gradle can't do S3 under CodeBuild
+      # (build.gradle knows to look in build/window-artifacts-local/gradle-ivy)
+      #- mkdir -p build/window-artifacts-local/gradle-ivy
+      #- aws s3 cp s3://$GRADLE_REPO_BUCKET/gradle-ivy build/ window-artifacts-local/gradle-ivy --recursive
+
+  build:
+    commands:
+      # build JAR
+      - gradle shadowJar
+
+      # package up the template
+      # (handles exporting JAR to S3)
+      - mkdir build/cloudformation
+      - cd build/cloudformation
+      - unzip ../libs/*-all.jar
+      - aws cloudformation package
+           --template-file ../../cloudformation/template.yaml
+           --s3-bucket $BUILD_ARTIFACT_BUCKET
+           --output-template-file template-export.yaml
+artifacts:
+  files:
+    - build/cloudformation/template-export.yaml
+  discard-paths: yes
+
